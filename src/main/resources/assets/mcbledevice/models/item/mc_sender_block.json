@@ -1,0 +1,6 @@
+{
+  "parent": "mcbledevice:block/mc_sender_block",
+  "textures": {
+    "layer0": "mcbledevice:item/mc_sender_block"
+  }
+}

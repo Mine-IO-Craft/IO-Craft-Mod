@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "mcbledevice:block/mc_sender_block"
+    }
+  }
+}

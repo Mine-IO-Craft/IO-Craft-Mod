@@ -1,0 +1,57 @@
+
+{
+"item.mcbledevice.mc_sender_block":"mcSender",
+"block.mcbledevice.mc_sender_block": "MC Sender",
+
+"text.autoconfig.mcbledevice.title": "McBleDevice Configuration",
+
+"text.autoconfig.mcbledevice.option.connectionMode": "Connection Mode",
+"text.autoconfig.mcbledevice.option.connectionMode.@Tooltip": "Select how to connect to the device.",
+
+"text.autoconfig.mcbledevice.option.serialPort": "Serial Port",
+"text.autoconfig.mcbledevice.option.serialPort.@Tooltip": "Serial port used to communicate with the device (e.g. COM3).",
+
+"text.autoconfig.mcbledevice.option.baudRate": "Baud Rate",
+"text.autoconfig.mcbledevice.option.baudRate.@Tooltip": "Communication baud rate for the serial port.",
+
+"text.autoconfig.mcbledevice.option.deviceIp": "Device IP",
+"text.autoconfig.mcbledevice.option.deviceIp.@Tooltip": "IPv4 address of the target device.",
+
+"text.autoconfig.mcbledevice.option.devicePort": "Device Port",
+"text.autoconfig.mcbledevice.option.devicePort.@Tooltip": "TCP port of the target device.",
+
+"text.autoconfig.mcbledevice.option.requestConnect": "Connect Device",
+"text.autoconfig.mcbledevice.option.requestConnect.@Tooltip": "Enable to initiate a connection. The option will automatically reset after the attempt.",
+
+"text.autoconfig.mcbledevice.option.sendIntervalMs": "Send Interval (ms)",
+"text.autoconfig.mcbledevice.option.sendIntervalMs.@Tooltip": "Interval between data transmissions in milliseconds.",
+
+"text.autoconfig.mcbledevice.option.send": "Data Transmission",
+
+"text.autoconfig.mcbledevice.option.send.health": "Health",
+"text.autoconfig.mcbledevice.option.send.health.@Tooltip": "Transmit the player's health.",
+
+"text.autoconfig.mcbledevice.option.send.food": "Hunger",
+"text.autoconfig.mcbledevice.option.send.food.@Tooltip": "Transmit the player's hunger level.",
+
+"text.autoconfig.mcbledevice.option.send.saturation": "Saturation",
+"text.autoconfig.mcbledevice.option.send.saturation.@Tooltip": "Transmit the player's saturation level.",
+
+"text.autoconfig.mcbledevice.option.send.position": "Position",
+"text.autoconfig.mcbledevice.option.send.position.@Tooltip": "Transmit the player's position.",
+
+"text.autoconfig.mcbledevice.option.send.level": "Experience Level",
+"text.autoconfig.mcbledevice.option.send.level.@Tooltip": "Transmit the player's experience level.",
+
+"text.autoconfig.mcbledevice.option.send.difficulty": "Difficulty",
+"text.autoconfig.mcbledevice.option.send.difficulty.@Tooltip": "Transmit the current world difficulty.",
+
+"text.autoconfig.mcbledevice.option.send.time": "World Time",
+"text.autoconfig.mcbledevice.option.send.time.@Tooltip": "Transmit the current world time.",
+
+"text.autoconfig.mcbledevice.option.send.speed": "Movement Speed",
+"text.autoconfig.mcbledevice.option.send.speed.@Tooltip": "Transmit the player's movement speed.",
+
+"key.mcbledevice.config": "Open Settings",
+"category.mcbledevice": "McBleDevice"
+}

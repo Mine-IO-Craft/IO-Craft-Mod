@@ -1,0 +1,57 @@
+
+{
+  "item.mcbledevice.mc_sender_block":"MC发送器",
+  "block.mcbledevice.mc_sender_block": "MC发送器",
+
+"text.autoconfig.mcbledevice.title": "McBleDevice 配置",
+
+"text.autoconfig.mcbledevice.option.connectionMode": "连接模式",
+"text.autoconfig.mcbledevice.option.connectionMode.@Tooltip": "选择设备连接方式",
+
+"text.autoconfig.mcbledevice.option.serialPort": "串口号",
+"text.autoconfig.mcbledevice.option.serialPort.@Tooltip": "用于连接设备的串口名称，例如 COM3",
+
+"text.autoconfig.mcbledevice.option.baudRate": "波特率",
+"text.autoconfig.mcbledevice.option.baudRate.@Tooltip": "串口通信波特率",
+
+"text.autoconfig.mcbledevice.option.deviceIp": "设备 IP",
+"text.autoconfig.mcbledevice.option.deviceIp.@Tooltip": "设备的 IPv4 地址",
+
+"text.autoconfig.mcbledevice.option.devicePort": "设备端口",
+"text.autoconfig.mcbledevice.option.devicePort.@Tooltip": "TCP 通信端口",
+
+"text.autoconfig.mcbledevice.option.requestConnect": "连接设备",
+"text.autoconfig.mcbledevice.option.requestConnect.@Tooltip": "勾选后尝试连接设备，连接完成后会自动取消",
+
+"text.autoconfig.mcbledevice.option.sendIntervalMs": "发送周期(ms)",
+"text.autoconfig.mcbledevice.option.sendIntervalMs.@Tooltip": "玩家数据发送间隔，单位为毫秒",
+
+"text.autoconfig.mcbledevice.option.send": "数据发送",
+
+"text.autoconfig.mcbledevice.option.send.health": "生命值",
+"text.autoconfig.mcbledevice.option.send.health.@Tooltip": "启用后发送玩家生命值",
+
+"text.autoconfig.mcbledevice.option.send.food": "饱食度",
+"text.autoconfig.mcbledevice.option.send.food.@Tooltip": "启用后发送玩家饱食度",
+
+"text.autoconfig.mcbledevice.option.send.saturation": "饱和度",
+"text.autoconfig.mcbledevice.option.send.saturation.@Tooltip": "启用后发送玩家饱和度",
+
+"text.autoconfig.mcbledevice.option.send.position": "坐标",
+"text.autoconfig.mcbledevice.option.send.position.@Tooltip": "启用后发送玩家坐标",
+
+"text.autoconfig.mcbledevice.option.send.level": "经验等级",
+"text.autoconfig.mcbledevice.option.send.level.@Tooltip": "启用后发送玩家经验等级",
+
+"text.autoconfig.mcbledevice.option.send.difficulty": "游戏难度",
+"text.autoconfig.mcbledevice.option.send.difficulty.@Tooltip": "启用后发送当前世界难度",
+
+"text.autoconfig.mcbledevice.option.send.time": "游戏时间",
+"text.autoconfig.mcbledevice.option.send.time.@Tooltip": "启用后发送当前世界时间",
+
+"text.autoconfig.mcbledevice.option.send.speed": "移动速度",
+"text.autoconfig.mcbledevice.option.send.speed.@Tooltip": "启用后发送玩家移动速度",
+
+"key.mcbledevice.config": "打开设置页",
+"category.mcbledevice": "McBleDevice"
+}

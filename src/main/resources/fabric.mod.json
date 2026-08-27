@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"id": "mcbledevice",
+	"version": "${version}",
+	"name": "McBleDevice",
+	"description": "Minecraft 数据桥接模组：通过 BLE / 串口 / TCP 将玩家数据发送给硬件设备。",
+	"authors": [
+		"wuwen",
+		"methyl orange"
+	],
+	"license": "CC0-1.0",
+	"icon": "assets/mcbledevice/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.ble.mcbledevice.McBleDevice"
+		],
+		"client": ["com.ble.mcbledevice.client.McBleDeviceClient"],
+		"modmenu": [
+			"com.ble.mcbledevice.menu.ModMenuIntegration"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*",
+		"cloth-config": ">=15.0.140"
+	},
+	"suggests": {
+		"modmenu": "*"
+	}
+}
