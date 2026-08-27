@@ -1,4 +1,4 @@
-# McBleDevice
+# IO-Croft
 
 Minecraft Fabric 模组（1.21.1）：把玩家数据（生命值、饥饿值、坐标、等级等）通过 **BLE / 串口 / TCP** 发送给外部硬件设备。
 
@@ -37,4 +37,4 @@ Minecraft Fabric 模组（1.21.1）：把玩家数据（生命值、饥饿值、
 
 本项目代码基于 CC0-1.0 发布。
 
-> 注意：模组打包了 SimpleJavaBLE（BUSL-1.1 许可），公开发布前请自行确认合规性。
+> 注意：模组打包了 SimpleJavaBLE（BUSL-1.1 许可）。
