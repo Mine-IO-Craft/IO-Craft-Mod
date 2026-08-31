@@ -188,7 +188,7 @@ public class McBleDevice implements ModInitializer {
 			BleHandler.shutdown();
 		});
 
-		LOGGER.info("McBleDevice 模组加载完成！");
+		LOGGER.info("IO-Craft 模组加载完成！");
 	}
 
 	public static Identifier id(String path) {

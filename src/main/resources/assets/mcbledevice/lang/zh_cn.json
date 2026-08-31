@@ -3,7 +3,7 @@
   "item.mcbledevice.mc_sender_block":"MC发送器",
   "block.mcbledevice.mc_sender_block": "MC发送器",
 
-"text.autoconfig.mcbledevice.title": "McBleDevice 配置",
+"text.autoconfig.mcbledevice.title": "IO-Craft 配置",
 
 "text.autoconfig.mcbledevice.option.connectionMode": "连接模式",
 "text.autoconfig.mcbledevice.option.connectionMode.@Tooltip": "选择设备连接方式",
@@ -53,5 +53,5 @@
 "text.autoconfig.mcbledevice.option.send.speed.@Tooltip": "启用后发送玩家移动速度",
 
 "key.mcbledevice.config": "打开设置页",
-"category.mcbledevice": "McBleDevice"
+"category.mcbledevice": "IO-Craft"
 }

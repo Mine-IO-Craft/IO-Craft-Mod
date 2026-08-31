@@ -3,7 +3,7 @@
 "item.mcbledevice.mc_sender_block":"mcSender",
 "block.mcbledevice.mc_sender_block": "MC Sender",
 
-"text.autoconfig.mcbledevice.title": "McBleDevice Configuration",
+"text.autoconfig.mcbledevice.title": "IO-Craft Configuration",
 
 "text.autoconfig.mcbledevice.option.connectionMode": "Connection Mode",
 "text.autoconfig.mcbledevice.option.connectionMode.@Tooltip": "Select how to connect to the device.",
@@ -53,5 +53,5 @@
 "text.autoconfig.mcbledevice.option.send.speed.@Tooltip": "Transmit the player's movement speed.",
 
 "key.mcbledevice.config": "Open Settings",
-"category.mcbledevice": "McBleDevice"
+"category.mcbledevice": "IO-Craft"
 }

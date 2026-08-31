@@ -1,4 +1,6 @@
-# IO-Croft
+# IO-Craft
+
+![IO-Craft](src/image.png)
 
 Minecraft Fabric 模组（1.21.1）：把玩家数据（生命值、饥饿值、坐标、等级等）通过 **BLE / 串口 / TCP** 发送给外部硬件设备。
 
@@ -22,7 +24,7 @@ Minecraft Fabric 模组（1.21.1）：把玩家数据（生命值、饥饿值、
 ## 使用
 
 1. 安装 Fabric Loader、Fabric API 与 Cloth Config（运行时依赖）
-2. 将 `mcbledevice-1.0.0.jar` 放入 `mods/` 目录
+2. 将 `io-craft-1.0.0.jar` 放入 `mods/` 目录
 3. 进入游戏后按 `P` 打开配置页，选择传输通道并连接设备
 
 ## 设备协议
@@ -32,6 +34,10 @@ Minecraft Fabric 模组（1.21.1）：把玩家数据（生命值、饥饿值、
   - 通知特征（设备 → 主机）：`0xFFF2`
 - UDP 广播发现：发送 `MC_DISCOVER`，设备回复 `MC_DEVICE|IP|PORT` 后建立 TCP 数据通道
 - 数据包格式：`module(1B) + command(1B) + length(1B) + data`
+
+## 作者
+- Methyl-Orange
+- wuwen
 
 ## License
 

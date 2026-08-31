@@ -66,7 +66,7 @@ public class McBleDeviceConfigScreen extends Screen {
     private int saveMessageTicks = 0;
 
     public McBleDeviceConfigScreen() {
-        super(Text.literal("McBleDevice 设置"));
+        super(Text.literal("IO-Craft 设置"));
     }
 
     private int deviceCount() {

@@ -2,12 +2,16 @@
 	"schemaVersion": 1,
 	"id": "mcbledevice",
 	"version": "${version}",
-	"name": "McBleDevice",
+	"name": "IO-Craft",
 	"description": "Minecraft 数据桥接模组：通过 BLE / 串口 / TCP 将玩家数据发送给硬件设备。",
 	"authors": [
-		"wuwen",
-		"methyl orange"
+		"Methyl-Orange",
+		"wuwen"
 	],
+	"contact": {
+		"homepage": "https://github.com/Mine-IO-Craft/IO-Craft-Mod",
+		"sources": "https://github.com/Mine-IO-Craft/IO-Craft-Mod"
+	},
 	"license": "CC0-1.0",
 	"icon": "assets/mcbledevice/icon.png",
 	"environment": "*",
@@ -15,7 +19,9 @@
 		"main": [
 			"com.ble.mcbledevice.McBleDevice"
 		],
-		"client": ["com.ble.mcbledevice.client.McBleDeviceClient"],
+		"client": [
+			"com.ble.mcbledevice.client.McBleDeviceClient"
+		],
 		"modmenu": [
 			"com.ble.mcbledevice.menu.ModMenuIntegration"
 		]
