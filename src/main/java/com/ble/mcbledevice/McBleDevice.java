@@ -107,7 +107,7 @@ public class McBleDevice implements ModInitializer {
 							sender.length = payload.length();
 							sender.data = payload.data();
 
-							sender.markDirty();
+							sender.markUpdated();
 							McBleDevice.LOGGER.info(
 									"MC Sender Saved: module={} command={} length={}",
 									sender.module,

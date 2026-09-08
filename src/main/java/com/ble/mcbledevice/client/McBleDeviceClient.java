@@ -1,10 +1,13 @@
 package com.ble.mcbledevice.client;
 
+import com.ble.mcbledevice.blocks.ModBlockEntities;
+import com.ble.mcbledevice.client.render.McSenderBlockEntityRenderer;
 import com.ble.mcbledevice.client.screen.McBleDeviceConfigScreen;
 import com.ble.mcbledevice.menu.ModScreenHandlers;
 import com.ble.mcbledevice.client.screen.McSenderScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
@@ -19,6 +22,8 @@ public class McBleDeviceClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+
+        BlockEntityRendererRegistry.register(ModBlockEntities.MC_SENDER, McSenderBlockEntityRenderer::new);
 
         HandledScreens.register(
                 ModScreenHandlers.MC_SENDER_SCREEN_HANDLER,

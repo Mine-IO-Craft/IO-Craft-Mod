@@ -24,7 +24,7 @@ Minecraft Fabric 模组（1.21.1）：把玩家数据（生命值、饥饿值、
 ## 使用
 
 1. 安装 Fabric Loader、Fabric API 与 Cloth Config（运行时依赖）
-2. 将 `io-craft-1.0.0.jar` 放入 `mods/` 目录
+2. 将 `io-craft-0.2.0.jar` 放入 `mods/` 目录
 3. 进入游戏后按 `P` 打开配置页，选择传输通道并连接设备
 
 ## 设备协议
