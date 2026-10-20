@@ -17,7 +17,9 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -331,6 +333,47 @@ public class NetworkHandler {
     /**
      * 关闭线程池（服务器停止时调用）。
      */
+    /**
+     * 批量投递：整批帧一次入队，由本通道按帧边界分块后顺序写出（不拆分数据段）。
+     */
+    public static void sendFrames(List<byte[]> frames) {
+        if (frames == null || frames.isEmpty()) {
+            return;
+        }
+        List<byte[]> snapshot = new ArrayList<>(frames);
+        executor.submit(() -> {
+            if (!ensureConnected()) {
+                if (lastConnectionState) {
+                    LOGGER.warn("网络未连接，批次已丢弃");
+                    lastConnectionState = false;
+                }
+                return;
+            }
+            if (!lastConnectionState) {
+                LOGGER.info("网络连接已恢复");
+                lastConnectionState = true;
+            }
+            for (PacketPacker.Chunk chunk : PacketPacker.pack(snapshot, PacketPacker.DEFAULT_MAX_CHUNK)) {
+                try {
+                    OutputStream os = tcpSocket.getOutputStream();
+                    os.write(chunk.data);
+                    os.flush();
+                } catch (IOException e) {
+                    LOGGER.error("发送数据块失败（{} 帧 / {} 字节）", chunk.frameCount, chunk.data.length, e);
+                    try {
+                        if (tcpSocket != null) {
+                            tcpSocket.close();
+                        }
+                    } catch (IOException ignored) {
+                    }
+                    tcpSocket = null;
+                    lastConnectionState = false;
+                    return;
+                }
+            }
+        });
+    }
+
     public static void shutdown() {
         disconnect();
         executor.shutdownNow();

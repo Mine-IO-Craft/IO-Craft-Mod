@@ -1,5 +1,6 @@
 package com.ble.mcbledevice.handler;
 
+import com.ble.mcbledevice.tools.PacketPacker;
 import org.simplejavable.Adapter;
 import org.simplejavable.BluetoothUUID;
 import org.simplejavable.Characteristic;
@@ -16,11 +17,19 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * BLE 连接处理器（基于 SimpleJavaBLE / SimpleBLE）。
  * 与串口一致：默认不自动连接，需要用户在配置页手动扫描并连接。
+ *
+ * 线程模型：SimpleBLE 的 Peripheral 对象不是线程安全的，因此所有 native 调用
+ * （连接、断开、写入、状态查询）都只在单线程 executor 内执行；
+ * 游戏/渲染线程调用 sendData / sendFrames / isConnected 只读写 volatile 状态，绝不触碰 native。
+ *
+ * 发送：方块数据走批次投递（sendFrames），周期玩家数据走单帧投递（sendData），
+ * 两者都在 executor 内按 min(244, MTU-3) 分块并保证不拆分数据段。
  *
  * 设备 UUID（用户约定）：
  *   SERVICE 0xFFF0
@@ -54,21 +63,30 @@ public class BleHandler {
     private static volatile String adapterInfo = "";
     private static volatile String initError = "";
 
-    // 连接状态
+    // 连接状态（volatile，只在 executor 线程或 native 回调中更新；游戏线程只读）
     private static volatile Adapter adapter;
     private static final AtomicReference<Peripheral> currentPeripheral = new AtomicReference<>();
     private static final AtomicBoolean bleEnabled = new AtomicBoolean(false);
+    private static volatile boolean bleConnected = false;
+    private static volatile String currentDeviceLabel = "";
 
     // 扫描状态
     private static final AtomicBoolean scanning = new AtomicBoolean(false);
     private static final List<Peripheral> scanResults = new CopyOnWriteArrayList<>();
     private static volatile String scanStatus = "";
 
-    // 连接后确定的写入方式：false=writeRequest，true=writeCommand
+    // 连接后确定的写入方式：true=writeCommand（无应答），false=writeRequest（有应答）
     private static volatile boolean useWriteCommand = false;
 
     // 最近一次收到的数据（仅用于界面显示）
     private static volatile String lastRxInfo = "";
+
+    // 发送统计（按“协议帧”计数，便于与抓包对照；块数单独统计）
+    private static final AtomicLong statFramesSent = new AtomicLong();
+    private static final AtomicLong statFramesDropped = new AtomicLong();
+    private static final AtomicLong statFramesFailed = new AtomicLong();
+    private static final AtomicLong statChunksSent = new AtomicLong();
+    private static long lastWarnTime = 0;
 
     /**
      * 初始化 BLE 模块（模组启动时调用）。
@@ -129,16 +147,9 @@ public class BleHandler {
         return bleEnabled.get();
     }
 
+    /** 当前连接状态（volatile 缓存，不触发 native，可在任意线程调用） */
     public static boolean isConnected() {
-        Peripheral p = currentPeripheral.get();
-        if (p == null) {
-            return false;
-        }
-        try {
-            return p.isConnected();
-        } catch (Exception e) {
-            return false;
-        }
+        return bleConnected;
     }
 
     public static boolean isScanning() {
@@ -153,12 +164,29 @@ public class BleHandler {
         return lastRxInfo;
     }
 
+    /** 当前设备显示名（缓存，不触发 native） */
     public static String getCurrentDeviceLabel() {
-        Peripheral p = currentPeripheral.get();
-        if (p == null) {
-            return "";
-        }
-        return p.getIdentifier() + " [" + p.getAddress() + "]";
+        return currentDeviceLabel;
+    }
+
+    /** 发送统计：成功写出的协议帧数 */
+    public static long getStatSent() {
+        return statFramesSent.get();
+    }
+
+    /** 发送统计：因未启用/连接不可用被丢弃的协议帧数 */
+    public static long getStatDropped() {
+        return statFramesDropped.get();
+    }
+
+    /** 发送统计：写入失败或超限的协议帧数 */
+    public static long getStatFailed() {
+        return statFramesFailed.get();
+    }
+
+    /** 发送统计：实际执行的 BLE 写入次数（块数） */
+    public static long getStatChunksSent() {
+        return statChunksSent.get();
     }
 
     /** 界面用：最近一次扫描结果（不可修改） */
@@ -253,6 +281,8 @@ public class BleHandler {
             } catch (Exception ignored) {}
         }
         currentPeripheral.set(null);
+        bleConnected = false;
+        currentDeviceLabel = "";
         useWriteCommand = false;
 
         try {
@@ -272,10 +302,14 @@ public class BleHandler {
             }
 
             currentPeripheral.set(target);
+            bleConnected = true;
+            currentDeviceLabel = target.getIdentifier() + " [" + target.getAddress() + "]";
             target.setEventListener(new Peripheral.EventListener() {
                 @Override
                 public void onDisconnected() {
                     bleEnabled.set(false);
+                    bleConnected = false;
+                    currentDeviceLabel = "";
                     scanStatus = "设备已断开: " + target.getIdentifier();
                     LOGGER.info("[BLE] 设备已断开: {}", target.getIdentifier());
                 }
@@ -283,10 +317,12 @@ public class BleHandler {
 
             configureServices(target);
             scanStatus = "已连接: " + target.getIdentifier() + " [" + target.getAddress() + "]";
-            LOGGER.info("[BLE] 已连接: {} [{}] MTU={}",
-                    target.getIdentifier(), target.getAddress(), target.getMtu());
+            LOGGER.info("[BLE] 已连接: {} [{}] MTU={}（单次写入上限 {} 字节）",
+                    target.getIdentifier(), target.getAddress(), target.getMtu(), blePayloadLimit(target));
         } catch (Exception e) {
             bleEnabled.set(false);
+            bleConnected = false;
+            currentDeviceLabel = "";
             scanStatus = "连接异常: " + e.getMessage();
             LOGGER.error("[BLE] 连接异常", e);
         }
@@ -294,6 +330,7 @@ public class BleHandler {
 
     /**
      * 连接后：发现服务/特征，确定 WRITE(FFF1) 写入方式，并订阅 NOTIFY(FFF2) 通知。
+     * 写入优先选 writeCommand（无应答写）：不会因等待 ATT 应答而长时间卡住 executor。
      */
     private static void configureServices(Peripheral p) {
         boolean foundService = false;
@@ -309,17 +346,17 @@ public class BleHandler {
                 for (Characteristic c : s.characteristics()) {
                     String cuuid = c.uuid();
                     if (uuidEquals(cuuid, WRITE_UUID)) {
-                        if (c.canWriteRequest()) {
-                            useWriteCommand = false;
-                            txReady = true;
-                        } else if (c.canWriteCommand()) {
+                        if (c.canWriteCommand()) {
                             useWriteCommand = true;
                             txReady = true;
-                        } else {
-                            // 部分设备属性探测不全，回退到 writeRequest
+                        } else if (c.canWriteRequest()) {
                             useWriteCommand = false;
                             txReady = true;
-                            LOGGER.warn("[BLE] WRITE FFF1 属性未知，回退 writeRequest");
+                        } else {
+                            // 属性探测不全时回退 writeCommand，避免 writeRequest 等应答卡住整条队列
+                            useWriteCommand = true;
+                            txReady = true;
+                            LOGGER.warn("[BLE] WRITE FFF1 属性未知，回退 writeCommand");
                         }
                     }
                     if (uuidEquals(cuuid, NOTIFY_UUID)) {
@@ -362,6 +399,8 @@ public class BleHandler {
             return;
         }
         executor.submit(() -> {
+            bleConnected = false;
+            currentDeviceLabel = "";
             try {
                 if (p.isConnected()) {
                     try { p.unsubscribe(SERVICE, NOTIFY); } catch (Exception ignored) {}
@@ -377,31 +416,110 @@ public class BleHandler {
     }
 
     /**
-     * 发送二进制数据包（仅 BLE 已启用且已连接时发送；与串口一致，未开启不自动重连）。
+     * 单帧投递（周期玩家数据路径）。
+     * 只负责入队：连接检查与 native 写入全部在 executor 线程内完成。
      */
     public static void sendData(byte[] packet) {
         if (packet == null || packet.length == 0) {
             return;
         }
-        if (!bleEnabled.get() || !isConnected()) {
+        List<byte[]> frames = new ArrayList<>(1);
+        frames.add(packet);
+        deliver(frames);
+    }
+
+    /**
+     * 批量投递（方块数据批次路径）。
+     * 整批帧一次入队，由本通道按 min(244, MTU-3) 分块后顺序写出，不拆分数据段。
+     */
+    public static void sendFrames(List<byte[]> frames) {
+        if (frames == null || frames.isEmpty()) {
             return;
+        }
+        deliver(new ArrayList<>(frames));
+    }
+
+    /** 把一批完整帧交给 executor：检查连接 → 分块 → 顺序写入 */
+    private static void deliver(List<byte[]> frames) {
+        executor.submit(() -> deliverInternal(frames));
+    }
+
+    private static void deliverInternal(List<byte[]> frames) {
+        int frameCount = frames.size();
+        if (frameCount == 0) {
+            return;
+        }
+        if (!bleEnabled.get()) {
+            statFramesDropped.addAndGet(frameCount);
+            return; // 未启用 BLE：静默忽略（与旧行为一致）
         }
         Peripheral p = currentPeripheral.get();
-        if (p == null) {
+        if (p == null || !bleConnected) {
+            statFramesDropped.addAndGet(frameCount);
+            warnThrottled("[BLE] 连接不可用，{} 帧已丢弃（帧 ok={} drop={} fail={}）",
+                    frameCount, statFramesSent.get(), statFramesDropped.get(), statFramesFailed.get());
             return;
         }
-        executor.submit(() -> {
+
+        int limit = blePayloadLimit(p);
+        List<PacketPacker.Chunk> chunks = PacketPacker.pack(frames, limit);
+        for (int i = 0; i < chunks.size(); i++) {
+            PacketPacker.Chunk chunk = chunks.get(i);
+            // 单个数据段本身就超过 BLE 单次写入上限：无法通过 BLE 投递
+            if (chunk.data.length > limit) {
+                statFramesFailed.addAndGet(chunk.frameCount);
+                LOGGER.error("[BLE] 单个数据段 {} 字节超过 BLE 写入上限 {}，该帧已丢弃",
+                        chunk.data.length, limit);
+                continue;
+            }
             try {
                 if (useWriteCommand) {
-                    p.writeCommand(SERVICE, WRITE, packet);
+                    p.writeCommand(SERVICE, WRITE, chunk.data);
                 } else {
-                    p.writeRequest(SERVICE, WRITE, packet);
+                    p.writeRequest(SERVICE, WRITE, chunk.data);
                 }
-                LOGGER.debug("[BLE] 已发送 {} 字节 -> FFF1", packet.length);
+                statChunksSent.incrementAndGet();
+                statFramesSent.addAndGet(chunk.frameCount);
+                LOGGER.debug("[BLE] 已发送 {} 帧 / {} 字节（帧 ok={} drop={} fail={} chunks={}）",
+                        chunk.frameCount, chunk.data.length,
+                        statFramesSent.get(), statFramesDropped.get(), statFramesFailed.get(),
+                        statChunksSent.get());
             } catch (Exception e) {
-                LOGGER.error("[BLE] 发送失败（包长 {}，MTU {}）", packet.length, p.getMtu(), e);
+                // 本块失败：本块与后续所有块都算失败
+                int remaining = 0;
+                for (int j = i; j < chunks.size(); j++) {
+                    remaining += chunks.get(j).frameCount;
+                }
+                statFramesFailed.addAndGet(remaining);
+                bleConnected = false; // 写入失败说明链路很可能已断开，避免继续盲写
+                LOGGER.error("[BLE] 发送失败（本块 {} 帧 / {} 字节，本批剩余 {} 帧视为失败，帧 ok={} drop={} fail={}）",
+                        chunk.frameCount, chunk.data.length, remaining,
+                        statFramesSent.get(), statFramesDropped.get(), statFramesFailed.get(), e);
+                return;
             }
-        });
+        }
+    }
+
+    /** BLE 单次写入上限：固件 244 字节 与 (MTU-3) 取小 */
+    private static int blePayloadLimit(Peripheral p) {
+        int limit = PacketPacker.DEFAULT_MAX_CHUNK;
+        try {
+            int mtu = p.getMtu();
+            if (mtu > 3) {
+                limit = Math.min(PacketPacker.DEFAULT_MAX_CHUNK, mtu - 3);
+            }
+        } catch (Exception ignored) {
+        }
+        return limit;
+    }
+
+    /** 丢弃/异常提示的限流日志：至少间隔 5 秒打一条，避免刷屏 */
+    private static void warnThrottled(String format, Object... args) {
+        long now = System.currentTimeMillis();
+        if (now - lastWarnTime > 5000) {
+            lastWarnTime = now;
+            LOGGER.warn(format, args);
+        }
     }
 
     /**
@@ -450,6 +568,8 @@ public class BleHandler {
      */
     public static void shutdown() {
         bleEnabled.set(false);
+        bleConnected = false;
+        currentDeviceLabel = "";
         Peripheral p = currentPeripheral.get();
         if (p != null) {
             try {

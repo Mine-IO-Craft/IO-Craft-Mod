@@ -1,9 +1,7 @@
 package com.ble.mcbledevice.blockentity;
 
 import com.ble.mcbledevice.blocks.ModBlockEntities;
-import com.ble.mcbledevice.handler.BleHandler;
-import com.ble.mcbledevice.handler.SerialHandler;
-import com.ble.mcbledevice.tools.NetworkHandler;
+import com.ble.mcbledevice.tools.PacketBatchCollector;
 import com.ble.mcbledevice.tools.PacketBuilderTool;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.block.BlockState;
@@ -122,8 +120,7 @@ public class McSenderBlockEntity extends BlockEntity {
                 Arrays.copyOf(data, len)
         );
         LOGGER.debug("Packet length = {}", packet.length);
-        SerialHandler.sendData(packet);
-        NetworkHandler.sendData(packet);
-        BleHandler.sendData(packet);
+        // 交给批次收集器：同一 tick 内多个发送器的帧会被打包后统一投递
+        PacketBatchCollector.enqueueFrame(packet);
     }
 }

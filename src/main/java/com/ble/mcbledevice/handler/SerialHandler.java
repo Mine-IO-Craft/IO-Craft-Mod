@@ -1,7 +1,10 @@
 package com.ble.mcbledevice.handler;
 import com.fazecast.jSerialComm.SerialPort;
+import com.ble.mcbledevice.tools.PacketPacker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import com.ble.mcbledevice.config.ConfigManager;
@@ -180,6 +183,41 @@ public class SerialHandler {
     /**
      * 关闭串口资源（模组卸载或游戏关闭时调用）
      */
+    /**
+     * 批量投递：整批帧一次入队，由本通道按帧边界分块后顺序写出（不拆分数据段）。
+     */
+    public static void sendFrames(List<byte[]> frames) {
+        if (frames == null || frames.isEmpty()) {
+            return;
+        }
+        List<byte[]> snapshot = new ArrayList<>(frames);
+        executor.submit(() -> {
+            if (!ensureConnected()) {
+                if (lastSerialState) {
+                    LOGGER.warn("串口未连接，批次已丢弃");
+                    lastSerialState = false;
+                }
+                return;
+            }
+            if (!lastSerialState) {
+                LOGGER.info("串口连接已恢复");
+                lastSerialState = true;
+            }
+            for (PacketPacker.Chunk chunk : PacketPacker.pack(snapshot, PacketPacker.DEFAULT_MAX_CHUNK)) {
+                try {
+                    serialPort.writeBytes(chunk.data, chunk.data.length);
+                } catch (Exception e) {
+                    LOGGER.error("发送数据块失败（{} 帧 / {} 字节）: {}",
+                            chunk.frameCount, chunk.data.length, e.getMessage());
+                    if (serialPort != null && !serialPort.isOpen()) {
+                        serialPort = null;
+                    }
+                    return;
+                }
+            }
+        });
+    }
+
     public static void shutdown() {
         executor.shutdownNow();
         if (serialPort != null && serialPort.isOpen()) {

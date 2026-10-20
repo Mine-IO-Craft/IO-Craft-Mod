@@ -435,7 +435,8 @@ public class McBleDeviceConfigScreen extends Screen {
 
         String bleConn;
         if (BleHandler.isConnected()) {
-            bleConn = "BLE连接: 已连接 " + BleHandler.getCurrentDeviceLabel();
+            bleConn = "BLE连接: 已连接 " + BleHandler.getCurrentDeviceLabel()
+                    + "  [ok=" + BleHandler.getStatSent() + " drop=" + BleHandler.getStatDropped() + " fail=" + BleHandler.getStatFailed() + " chunks=" + BleHandler.getStatChunksSent() + "]";
         } else if (BleHandler.isEnabled()) {
             bleConn = "BLE连接: 未连接（已启用）";
         } else {

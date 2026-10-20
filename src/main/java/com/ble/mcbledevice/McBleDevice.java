@@ -13,6 +13,7 @@ import com.ble.mcbledevice.item.ModItems;
 import com.ble.mcbledevice.menu.ModScreenHandlers;
 import com.ble.mcbledevice.network.McSenderUpdatePayload;
 import com.ble.mcbledevice.tools.NetworkHandler;
+import com.ble.mcbledevice.tools.PacketBatchCollector;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -177,6 +178,9 @@ public class McBleDevice implements ModInitializer {
 
 
 		// 玩家断开时清理其缓存数据，避免 lastDataMap 只增不减
+		// 每个服务端 tick 结束冲刷方块数据批次（周期玩家数据不走批次）
+		ServerTickEvents.END_SERVER_TICK.register(server -> PacketBatchCollector.flush());
+
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			lastDataMap.remove(handler.player.getUuid());
 		});
