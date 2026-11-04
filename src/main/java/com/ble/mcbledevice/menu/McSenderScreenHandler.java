@@ -10,7 +10,7 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.util.math.BlockPos;
 
 
-public class McSenderScreenHandler extends ScreenHandler {
+public class McSenderScreenHandler extends ScreenHandler implements SenderEditorData {
 
 
     private final McSenderBlockEntity blockEntity;

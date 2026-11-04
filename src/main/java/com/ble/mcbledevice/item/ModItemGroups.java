@@ -12,6 +12,7 @@ public class ModItemGroups {
                 .register(entries ->
                 {
                     entries.add(ModItems.mcSender);
+                    entries.add(ModItems.ESP32_S3);
 
                 });
     }

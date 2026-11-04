@@ -281,7 +281,7 @@ public class McSenderScreen extends HandledScreen<McSenderScreenHandler> {
                                 }
                         )
                         .dimensions(
-                                this.width / 2 - 40,
+                                this.width / 2 - 84,
                                 this.height / 2 + 70,
                                 80,
                                 20
@@ -289,6 +289,42 @@ public class McSenderScreen extends HandledScreen<McSenderScreenHandler> {
                         .build()
         );
 
+        addDrawableChild(
+                ButtonWidget.builder(
+                                Text.literal("协议编辑器"),
+                                button -> openProtocolEditor()
+                        )
+                        .dimensions(
+                                this.width / 2 + 4,
+                                this.height / 2 + 70,
+                                80,
+                                20
+                        )
+                        .build()
+        );
+
+    }
+
+    /**
+     * 切换前把旧页面输入同步到 handler（不发包），避免草稿丢失
+     */
+    private void openProtocolEditor() {
+        try {
+            byte module = (byte) Integer.parseInt(moduleField.getText().trim(), 16);
+            byte command = (byte) Integer.parseInt(commandField.getText().trim(), 16);
+            byte[] data = parseHex(dataField.getText());
+            handler.setModule(module);
+            handler.setCommand(command);
+            handler.setLength((byte) (data.length & 0xFF));
+            handler.setData(data);
+        } catch (Exception e) {
+            McBleDevice.LOGGER.warn("切换协议编辑器前解析旧页面输入失败", e);
+        }
+        this.client.setScreen(new McSenderProtocolScreen(
+                this.handler,
+                this.client.player.getInventory(),
+                Text.literal("协议编辑器")
+        ));
     }
 
     @Override

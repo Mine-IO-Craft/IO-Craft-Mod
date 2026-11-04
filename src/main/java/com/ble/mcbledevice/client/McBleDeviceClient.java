@@ -4,6 +4,8 @@ import com.ble.mcbledevice.blocks.ModBlockEntities;
 import com.ble.mcbledevice.client.render.McSenderBlockEntityRenderer;
 import com.ble.mcbledevice.client.screen.McBleDeviceConfigScreen;
 import com.ble.mcbledevice.menu.ModScreenHandlers;
+import com.ble.mcbledevice.client.screen.Esp32S3ProtocolScreen;
+import com.ble.mcbledevice.client.screen.McSenderProtocolScreen;
 import com.ble.mcbledevice.client.screen.McSenderScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -27,7 +29,12 @@ public class McBleDeviceClient implements ClientModInitializer {
 
         HandledScreens.register(
                 ModScreenHandlers.MC_SENDER_SCREEN_HANDLER,
-                McSenderScreen::new
+                McSenderProtocolScreen::new
+        );
+
+        HandledScreens.register(
+                ModScreenHandlers.ESP32_S3_SCREEN_HANDLER,
+                Esp32S3ProtocolScreen::new
         );
 
         // 按 P 打开自定义设置页

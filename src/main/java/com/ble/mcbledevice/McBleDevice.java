@@ -8,12 +8,17 @@ import com.ble.mcbledevice.config.ModConfig;
 import com.ble.mcbledevice.data.PlayerData;
 import com.ble.mcbledevice.handler.BleHandler;
 import com.ble.mcbledevice.handler.SerialHandler;
+import com.ble.mcbledevice.item.Esp32S3Data;
+import com.ble.mcbledevice.item.Esp32S3Item;
 import com.ble.mcbledevice.item.ModItemGroups;
 import com.ble.mcbledevice.item.ModItems;
+import com.ble.mcbledevice.menu.Esp32S3ScreenHandler;
 import com.ble.mcbledevice.menu.ModScreenHandlers;
+import com.ble.mcbledevice.network.Esp32S3UpdatePayload;
 import com.ble.mcbledevice.network.McSenderUpdatePayload;
 import com.ble.mcbledevice.tools.NetworkHandler;
 import com.ble.mcbledevice.tools.PacketBatchCollector;
+import com.ble.mcbledevice.tools.SenderPacketDispatcher;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -21,6 +26,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 
@@ -73,6 +79,11 @@ public class McBleDevice implements ModInitializer {
 						McSenderUpdatePayload.ID,
 						McSenderUpdatePayload.CODEC
 				);
+		PayloadTypeRegistry.playC2S()
+				.register(
+						Esp32S3UpdatePayload.ID,
+						Esp32S3UpdatePayload.CODEC
+				);
 		// 注册接收器
 		ServerPlayNetworking.registerGlobalReceiver(
 				McSenderUpdatePayload.ID,
@@ -121,6 +132,40 @@ public class McBleDevice implements ModInitializer {
 				}
 		);
 		// 初始化网络通信（不开启连接）
+		// ESP32-S3 手持物品：保存数据到物品栈；sendNow=true 时立即走现有发送链路
+		ServerPlayNetworking.registerGlobalReceiver(
+				Esp32S3UpdatePayload.ID,
+				(payload, context) -> context.server().execute(() -> {
+					ServerPlayerEntity player = context.player();
+					if (!(player.currentScreenHandler instanceof Esp32S3ScreenHandler handler)) {
+						return;
+					}
+					ItemStack stack = handler.getStack();
+					if (stack == null || !(stack.getItem() instanceof Esp32S3Item)) {
+						return;
+					}
+					byte[] data = payload.data();
+					if (data == null || data.length > 255) {
+						return;
+					}
+					byte length = (byte) (data.length & 0xFF);
+					handler.setModule(payload.module());
+					handler.setCommand(payload.command());
+					handler.setLength(length);
+					handler.setData(data);
+
+					Esp32S3Data.write(stack, payload.module(), payload.command(), length, data);
+					player.getInventory().markDirty();
+					// 同步物品栏，让客户端手持物品上的数据与服务器一致
+					player.playerScreenHandler.syncState();
+
+					if (payload.sendNow()) {
+						SenderPacketDispatcher.dispatch(payload.module(), payload.command(), length, data);
+						LOGGER.debug("ESP32-S3 发送: module={} cmd={} len={}",
+								payload.module(), payload.command(), data.length);
+					}
+				})
+		);
 		NetworkHandler.initialize();
 		// 初始化 BLE（不自动连接，需在配置页手动扫描/连接）
 		BleHandler.initialize();

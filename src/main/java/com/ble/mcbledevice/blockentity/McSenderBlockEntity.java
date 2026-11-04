@@ -1,8 +1,7 @@
 package com.ble.mcbledevice.blockentity;
 
 import com.ble.mcbledevice.blocks.ModBlockEntities;
-import com.ble.mcbledevice.tools.PacketBatchCollector;
-import com.ble.mcbledevice.tools.PacketBuilderTool;
+import com.ble.mcbledevice.tools.SenderPacketDispatcher;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -17,7 +16,6 @@ import net.minecraft.util.math.BlockPos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 
 /**
  * MC发送器方块实体：保存 cmd / mod / data / length。
@@ -109,18 +107,8 @@ public class McSenderBlockEntity extends BlockEntity {
     }
 
     private void sendPacket() {
-        // 协议长度字段只有 1 字节：按无符号解析（& 0xFF），并防止越界
-        int len = length & 0xFF;
-        if (len > data.length) {
-            len = data.length;
-        }
-        byte[] packet = PacketBuilderTool.buildPacket(
-                module,
-                command,
-                Arrays.copyOf(data, len)
-        );
-        LOGGER.debug("Packet length = {}", packet.length);
+        LOGGER.debug("发送器触发: module={} command={} length={}", module, command, length & 0xFF);
         // 交给批次收集器：同一 tick 内多个发送器的帧会被打包后统一投递
-        PacketBatchCollector.enqueueFrame(packet);
+        SenderPacketDispatcher.dispatch(module, command, length, data);
     }
 }

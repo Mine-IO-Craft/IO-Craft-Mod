@@ -1,6 +1,7 @@
 
 {
   "item.mcbledevice.mc_sender_block":"MC发送器",
+"item.mcbledevice.esp32_s3": "ESP32-S3",
   "block.mcbledevice.mc_sender_block": "MC发送器",
 
 "text.autoconfig.mcbledevice.title": "IO-Craft 配置",
